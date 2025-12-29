@@ -1,0 +1,1662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>2026 Office Learning Goal Diagnostic — Kelvin Ng (Prototype)</title>
+
+  <!-- Chart.js (Radar) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <style>
+    :root{
+      /* Base */
+      --bg:#0b1220;
+      --text:#e7eefc;
+      --muted:#b7c3dd;
+
+      /* Surfaces */
+      --surface: rgba(255,255,255,.06);
+      --surface2: rgba(255,255,255,.04);
+      --border: rgba(255,255,255,.10);
+      --shadow: 0 12px 30px rgba(0,0,0,.35);
+
+      /* Primary */
+      --accent:#7aa7ff;
+      --teal:#2aaea3;
+      --gold:#c7a24a;
+      --danger:#ff6b6b;
+      --ok:#6ee7b7;
+
+      /* Section colors */
+      --c-profile: #7aa7ff;
+      --c-pain:    #ff6b6b;
+      --c-reality: #2aaea3;
+      --c-expect:  #c7a24a;
+      --c-results: #6ee7b7;
+
+      --radius: 18px;
+      --radius2: 14px;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Helvetica Neue";
+      color: var(--text);
+      min-height:100vh;
+      background:
+        radial-gradient(1200px 800px at 20% -10%, rgba(122,167,255,.20), transparent 55%),
+        radial-gradient(900px 700px at 110% 10%, rgba(42,174,163,.16), transparent 45%),
+        radial-gradient(900px 700px at 30% 110%, rgba(199,162,74,.10), transparent 40%),
+        var(--bg);
+    }
+
+    .wrap{
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 18px 14px 52px;
+    }
+
+    /* Top header (friendlier, cleaner) */
+    .hero{
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px;
+      align-items:flex-end;
+      justify-content:space-between;
+      margin-bottom: 12px;
+    }
+    .hero h1{
+      margin:0;
+      font-size: 18px;
+      letter-spacing:.2px;
+    }
+    .hero p{
+      margin:6px 0 0;
+      max-width: 760px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .heroRight{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      color: var(--muted);
+      font-size: 12px;
+      user-select:none;
+      white-space:nowrap;
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      overflow:hidden;
+    }
+
+    /* Layout: main + sidebar. Sidebar sticky for balance. */
+    .layout{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      align-items:start;
+    }
+    @media (min-width: 920px){
+      .layout{ grid-template-columns: 1.35fr .65fr; }
+      .sticky{
+        position: sticky;
+        top: 12px;
+      }
+    }
+
+    /* Progress */
+    .progressWrap{ padding: 12px 14px; }
+    .progressRow{ display:flex; justify-content:space-between; align-items:center; gap:10px; }
+    .progressRow .small{ color: var(--muted); font-size: 12px; }
+    .bar{
+      margin-top:10px;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      overflow:hidden;
+      border: 1px solid rgba(255,255,255,.10);
+    }
+    .bar > div{
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg, rgba(122,167,255,.95), rgba(42,174,163,.95));
+      border-radius: 999px;
+      transition: width .35s ease;
+    }
+
+    /* Main panel header: color-coded by section */
+    .panelHeader{
+      padding: 14px 14px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .panelTitle{
+      margin:0;
+      font-size: 15px;
+      letter-spacing:.2px;
+    }
+    .panelDesc{
+      margin:6px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height:1.35;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color: rgba(231,238,252,.92);
+      font-size: 12px;
+      user-select:none;
+      white-space:nowrap;
+    }
+
+    .panelBody{ padding: 14px; }
+
+    /* Section label (color-coded) */
+    .sectionTag{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: rgba(231,238,252,.92);
+      font-size: 12px;
+      user-select:none;
+    }
+    .dot{
+      width:10px;
+      height:10px;
+      border-radius:999px;
+      background: var(--accent);
+      box-shadow: 0 0 0 3px rgba(255,255,255,.06) inset;
+    }
+
+    /* Questions (more compact, less vertical stretch) */
+    .q{
+      padding: 12px 12px;
+      border-radius: var(--radius2);
+      background: rgba(17,26,47,.55);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+    .qTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom: 10px;
+    }
+    .qNum{
+      min-width: 28px;
+      height: 28px;
+      border-radius: 10px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight: 900;
+      color: rgba(231,238,252,.95);
+      background: rgba(122,167,255,.14);
+      border: 1px solid rgba(122,167,255,.26);
+      font-size: 12px;
+      user-select:none;
+    }
+    .qText{ margin:0; font-size: 14px; font-weight: 800; letter-spacing:.15px; line-height:1.35; }
+    .qHelp{ margin:6px 0 0; color: var(--muted); font-size: 12px; line-height:1.35; }
+    .qCounter{ color: var(--muted); font-size: 12px; }
+
+    .options{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+    @media (min-width: 720px){
+      .options.twoCol{ grid-template-columns: 1fr 1fr; }
+    }
+
+    .opt{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      padding: 10px 10px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.10);
+      cursor:pointer;
+      transition: border-color .15s ease, background .15s ease;
+    }
+    .opt:hover{ border-color: rgba(122,167,255,.35); background: rgba(122,167,255,.08); }
+    .opt input{ margin-top: 2px; }
+    .opt .label{
+      font-size: 13px;
+      line-height: 1.35;
+      color: rgba(231,238,252,.95);
+    }
+
+    /* Controls */
+    .row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+      margin-top: 12px;
+    }
+    .btnRow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .btn{
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-weight: 800;
+      letter-spacing:.15px;
+      transition: background .15s ease, transform .05s ease;
+      user-select:none;
+    }
+    .btn:hover{ background: rgba(122,167,255,.10); }
+    .btn:active{ transform: translateY(1px); }
+    .btn.primary{
+      background: linear-gradient(90deg, rgba(122,167,255,.95), rgba(42,174,163,.95));
+      border-color: rgba(255,255,255,.10);
+      color:#061019;
+    }
+    .btn.ghost{ background: transparent; border-color: rgba(255,255,255,.14); }
+    .btn.danger{ background: rgba(255,107,107,.12); border-color: rgba(255,107,107,.30); }
+    .btn.small{ padding: 8px 10px; border-radius: 10px; font-size: 12px; }
+
+    /* Inputs */
+    .input{
+      width:100%;
+      padding: 10px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05);
+      color: var(--text);
+      outline:none;
+      font-size: 13px;
+    }
+    .input::placeholder{ color: rgba(183,195,221,.75); }
+
+    /* Sidebar */
+    .sideCard{
+      border-radius: var(--radius);
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(17,26,47,.55);
+      padding: 12px;
+    }
+    .sideCard h3{ margin:0 0 6px; font-size: 13px; letter-spacing:.2px; }
+    .sideCard p{ margin:0; color: var(--muted); font-size: 12px; line-height:1.35; }
+
+    .nudge{
+      margin-top:10px;
+      padding:10px;
+      border-radius: 12px;
+      border: 1px dashed rgba(199,162,74,.35);
+      background: rgba(199,162,74,.10);
+      color: rgba(231,238,252,.92);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    /* Results (balanced: tabs + compact grid) */
+    .tabs{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-bottom: 10px;
+    }
+    .tab{
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: rgba(231,238,252,.92);
+      font-size: 12px;
+      font-weight: 800;
+      cursor:pointer;
+      user-select:none;
+      transition: background .15s ease, border-color .15s ease;
+    }
+    .tab:hover{ border-color: rgba(122,167,255,.35); }
+    .tab.active{
+      background: rgba(122,167,255,.18);
+      border-color: rgba(122,167,255,.35);
+    }
+
+    .resultsGrid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      align-items:start;
+    }
+    @media (min-width: 920px){
+      .resultsGrid{ grid-template-columns: 1fr 1fr; }
+    }
+
+    .stat{
+      padding: 12px;
+      border-radius: var(--radius2);
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .big{
+      font-size: 34px;
+      font-weight: 950;
+      letter-spacing: -0.6px;
+      line-height: 1;
+    }
+    .meta{ color: var(--muted); font-size: 12px; line-height: 1.35; }
+
+    .meter{
+      margin-top: 10px;
+      height: 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      overflow:hidden;
+      border: 1px solid rgba(255,255,255,.10);
+    }
+    .meter > div{
+      height:100%;
+      width:0%;
+      border-radius: 999px;
+      transition: width .35s ease;
+    }
+
+    .list{
+      margin: 0;
+      padding:0;
+      list-style:none;
+      display:grid;
+      gap: 8px;
+    }
+    .li{
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      color: rgba(231,238,252,.95);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .li small{ color: var(--muted); display:block; margin-top:2px; font-size:12px; }
+
+    .cta{
+      padding: 12px;
+      border-radius: var(--radius2);
+      border: 1px solid rgba(42,174,163,.25);
+      background: rgba(42,174,163,.10);
+    }
+    .cta h3{ margin:0 0 6px; font-size: 13px; letter-spacing:.2px; }
+    .cta p{ margin:0; color: var(--muted); font-size: 12px; line-height: 1.35; }
+
+    .mutedNote{ margin-top: 8px; color: var(--muted); font-size: 12px; line-height:1.35; }
+    .hide{ display:none !important; }
+
+    /* Color-coded header strip */
+    .strip{
+      height: 6px;
+      background: var(--accent);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <div>
+        <h1>2026 Microsoft Office Learning Goal Diagnostic</h1>
+        <p>Friendly, practical, and fast. Answer quick questions, reveal bottlenecks, and get a focused 2026 learning plan with a clear next step.</p>
+      </div>
+      <div class="heroRight">
+        <div class="pill" id="timeHint">Target: &lt; 5 minutes</div>
+        <div class="pill" id="statePill">Status: <strong style="color:var(--text)">Ready</strong></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px;">
+      <div class="progressWrap">
+        <div class="progressRow">
+          <div class="small" id="progressText">Step 1 of 4</div>
+          <div class="small" id="sectionHint">Section: Start</div>
+        </div>
+        <div class="bar"><div id="progressBar"></div></div>
+      </div>
+    </div>
+
+    <div class="layout">
+      <!-- MAIN -->
+      <div class="card" id="mainCard">
+        <div class="strip" id="strip"></div>
+        <div class="panelHeader">
+          <div>
+            <h2 class="panelTitle" id="panelTitle">Start</h2>
+            <p class="panelDesc" id="panelDesc">Optional details for your report, then the diagnostic begins.</p>
+          </div>
+          <div class="badge" id="sectionTag">
+            <span class="dot" id="sectionDot"></span>
+            <span id="sectionTagText">Start</span>
+          </div>
+        </div>
+
+        <div class="panelBody" id="panelBody">
+
+          <!-- START SCREEN (more balanced: 3 fields in a single block) -->
+          <div id="screenStart">
+            <div class="q">
+              <div class="qTop">
+                <div>
+                  <p class="qText">Optional details (for your report)</p>
+                  <p class="qHelp">You can leave these blank and proceed.</p>
+                </div>
+                <div class="qCounter">Quick setup</div>
+              </div>
+
+              <div class="options twoCol" style="gap:10px;">
+                <div>
+                  <label class="meta" style="display:block; margin:0 0 6px;">Name (optional)</label>
+                  <input class="input" id="userName" placeholder="Your name" />
+                </div>
+                <div>
+                  <label class="meta" style="display:block; margin:0 0 6px;">Department (optional)</label>
+                  <input class="input" id="userDept" placeholder="e.g., Finance, HR, Operations" />
+                </div>
+                <div style="grid-column: 1 / -1;">
+                  <label class="meta" style="display:block; margin:0 0 6px;">Job role / title (optional)</label>
+                  <input class="input" id="userRoleTitle" placeholder="e.g., Executive, Analyst, Manager" />
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="meta">No login. Runs in your browser.</div>
+                <div class="btnRow">
+                  <button class="btn primary" id="btnStart">Start Diagnostic</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- QUESTION SCREEN -->
+          <div id="screenQuiz" class="hide">
+            <div id="questionHost"></div>
+            <div class="row">
+              <div class="meta" id="coachNudge"></div>
+              <div class="btnRow">
+                <button class="btn ghost" id="btnBack">Back</button>
+                <button class="btn danger" id="btnReset">Reset</button>
+                <button class="btn primary" id="btnNext">Next</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- RESULTS SCREEN (tabs to reduce “too long to bottom”) -->
+          <div id="screenResults" class="hide">
+            <div class="tabs" id="tabs">
+              <button class="tab active" data-tab="overview">Overview</button>
+              <button class="tab" data-tab="radar">Radar</button>
+              <button class="tab" data-tab="goals">Goals</button>
+              <button class="tab" data-tab="action">Action</button>
+            </div>
+
+            <!-- TAB: Overview -->
+            <div id="tab-overview">
+              <div class="resultsGrid">
+                <div>
+                  <div class="stat">
+                    <div>
+                      <div class="big" id="scoreBig">—</div>
+                      <div class="meta" id="scoreMeta">Office Productivity Score (0–100)</div>
+                    </div>
+                    <div style="text-align:right">
+                      <div class="meta" id="expectationLabel">2026 Expectations: —</div>
+                      <div class="meta" id="riskLabel">Risk Flags: —</div>
+                    </div>
+                  </div>
+
+                  <div style="margin-top:10px;">
+                    <div class="meta"><strong>You vs 2026 Expectations</strong></div>
+                    <div class="meter"><div id="expectMeter"></div></div>
+                    <div class="mutedNote" id="expectNote"></div>
+                  </div>
+                </div>
+
+                <div class="sideCard">
+                  <h3>Hidden Gap Snapshot</h3>
+                  <p id="hiddenGapText">—</p>
+                  <div class="nudge" id="closingNudge">—</div>
+                  <div class="mutedNote" id="timeSavedTag">Estimated time recovered: <strong>—</strong></div>
+                </div>
+              </div>
+
+              <div class="resultsGrid" style="margin-top:12px;">
+                <div class="sideCard">
+                  <h3>Top Strengths</h3>
+                  <ul class="list" id="strengthList"></ul>
+                </div>
+                <div class="sideCard">
+                  <h3>Top Bottlenecks</h3>
+                  <ul class="list" id="bottleList"></ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB: Radar -->
+            <div id="tab-radar" class="hide">
+              <div class="resultsGrid">
+                <div class="sideCard">
+                  <h3>Radar: Strengths & Gaps</h3>
+                  <p>Six dimensions that predict productivity and confidence in 2026.</p>
+                  <div style="margin-top:10px;">
+                    <canvas id="radar" height="270"></canvas>
+                  </div>
+                </div>
+                <div class="sideCard">
+                  <h3>What this means</h3>
+                  <p class="meta" id="radarExplanation">—</p>
+                  <div class="nudge">
+                    Kelvin Coach Note: You don’t need “more Excel tricks”. You need a better workflow system.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB: Goals -->
+            <div id="tab-goals" class="hide">
+              <div class="resultsGrid">
+                <div class="sideCard">
+                  <h3>Your 2026 Learning Focus (3 Goals)</h3>
+                  <ul class="list" id="goalList"></ul>
+                </div>
+                <div class="sideCard">
+                  <h3>AI-Generated 2026 Goal Statement</h3>
+                  <p class="meta">Copy/paste this into email or WhatsApp.</p>
+                  <textarea class="input" id="aiStatement" rows="10" style="margin-top:8px; resize:vertical"></textarea>
+                  <div class="btnRow" style="margin-top:10px; justify-content:flex-start;">
+                    <button class="btn" id="btnCopy">Copy</button>
+                    <button class="btn" id="btnDownloadWord">Download Report (Word)</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB: Action -->
+            <div id="tab-action" class="hide">
+              <div class="resultsGrid">
+                <div class="cta">
+                  <h3>Free 2026 Learning Plan Call</h3>
+                  <p>Tap below and WhatsApp Kelvin with your score + #1 bottleneck. You’ll receive a recommended roadmap (what to learn, what to fix first, and the fastest wins).</p>
+                  <div class="btnRow" style="margin-top:10px; justify-content:flex-start;">
+                    <a class="btn primary" id="btnWhatsApp" href="#" target="_blank" rel="noopener">WhatsApp Kelvin Now</a>
+                    <button class="btn ghost" id="btnRestart">Start Over</button>
+                  </div>
+                  <div class="mutedNote">
+                    Placeholder: replace <code>WHATSAPP_NUMBER_PLACEHOLDER</code> in the script with your number in international format (e.g., 60123456789).
+                  </div>
+                </div>
+
+                <div class="sideCard">
+                  <h3>What to send Kelvin</h3>
+                  <p class="meta">The app will prefill your message. If you want to edit manually, use:</p>
+                  <div class="nudge" id="manualMsgHint">Score + #1 bottleneck + target month for improvement.</div>
+                  <div class="mutedNote">This increases clarity and speeds up Kelvin’s recommendation.</div>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- end results -->
+
+        </div>
+      </div>
+
+      <!-- SIDEBAR (sticky, shorter, balanced) -->
+      <div class="sticky">
+        <div class="sideCard" style="margin-bottom:12px;">
+          <h3>Section Colors</h3>
+          <p class="meta">
+            <span style="color:var(--c-profile);font-weight:900;">Profile</span> •
+            <span style="color:var(--c-pain);font-weight:900;">Pain</span> •
+            <span style="color:var(--c-reality);font-weight:900;">Reality</span> •
+            <span style="color:var(--c-expect);font-weight:900;">2026</span> •
+            <span style="color:var(--c-results);font-weight:900;">Results</span>
+          </p>
+          <div class="nudge" id="sidebarNudge">You’re not behind. You’re running an old system in a new world.</div>
+        </div>
+
+        <div class="sideCard">
+          <h3>Privacy</h3>
+          <p>This prototype runs fully in your browser. No server. Your answers are not uploaded anywhere.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+/**
+ * Replace placeholder with your WhatsApp number (international format, no + sign).
+ * Example MY: 60123456789
+ */
+const WHATSAPP_NUMBER = "60123907200";
+
+const DIM = {
+  SPEED: "Speed & Shortcuts",
+  CLEAN: "Clean Data & Structure",
+  REPORT: "Reporting & Dashboards",
+  ACCUR: "Accuracy & Control",
+  AUTO: "Automation & Reuse",
+  AI: "AI Leverage"
+};
+
+const weights = {
+  [DIM.SPEED]: 0.15,
+  [DIM.CLEAN]: 0.15,
+  [DIM.REPORT]: 0.20,
+  [DIM.ACCUR]: 0.15,
+  [DIM.AUTO]: 0.25,
+  [DIM.AI]: 0.10
+};
+
+function pts(s){ return s; }
+
+const QUESTIONS = [
+  // Profile
+  {
+    id: "roleType",
+    section: "Profile",
+    text: "What best describes your work role?",
+    help: "This helps personalize your diagnostic.",
+    type: "single",
+    options: [
+      { key:"exec", label:"Executive / Manager", score:{}, meta:{role:"exec"} },
+      { key:"analyst", label:"Analyst / Reporting", score:{}, meta:{role:"analyst"} },
+      { key:"admin", label:"HR / Admin / Operations", score:{}, meta:{role:"admin"} },
+      { key:"general", label:"Sales / Project / General", score:{}, meta:{role:"general"} }
+    ],
+    required: true
+  },
+  {
+    id: "freq",
+    section: "Profile",
+    text: "In a typical week, how often do you touch Excel / Office files?",
+    help: "Don’t overthink—pick what’s true.",
+    type: "single",
+    options: [
+      { key:"daily", label:"Daily", score:{[DIM.SPEED]:pts(2), [DIM.CLEAN]:pts(2)}, meta:{freq:"daily"} },
+      { key:"34", label:"3–4 days per week", score:{[DIM.SPEED]:pts(1), [DIM.CLEAN]:pts(1)}, meta:{freq:"mid"} },
+      { key:"12", label:"1–2 days per week", score:{[DIM.SPEED]:pts(1)}, meta:{freq:"low"} },
+      { key:"rare", label:"Rarely", score:{}, meta:{freq:"rare"} }
+    ],
+    required: true
+  },
+  {
+    id: "outcome",
+    section: "Profile",
+    text: "Your #1 outcome for 2026:",
+    help: "Pick the most important one.",
+    type: "single",
+    options: [
+      { key:"faster", label:"Work faster (reduce time spent)", score:{}, meta:{outcome:"faster"} },
+      { key:"mistakes", label:"Reduce mistakes (more accuracy)", score:{}, meta:{outcome:"mistakes"} },
+      { key:"reports", label:"Produce better reports (clarity + confidence)", score:{}, meta:{outcome:"reports"} },
+      { key:"confident", label:"Feel confident with data + AI", score:{}, meta:{outcome:"confident"} }
+    ],
+    required: true
+  },
+
+  // Pain & urgency
+  {
+    id: "pain1",
+    section: "Pain & Urgency",
+    text: "Which one hurts most right now?",
+    help: "Choose the one that causes the most stress or delay.",
+    type: "single",
+    options: [
+      { key:"repeat", label:"I repeat the same steps every week.", score:{[DIM.AUTO]:pts(0)}, meta:{pain:"repeat"} },
+      { key:"messy", label:"My files become messy and hard to maintain.", score:{[DIM.CLEAN]:pts(0)}, meta:{pain:"messy"} },
+      { key:"notSure", label:"I’m not confident my numbers are correct.", score:{[DIM.ACCUR]:pts(0)}, meta:{pain:"accuracyFear"} },
+      { key:"reportSlow", label:"My reporting takes too long.", score:{[DIM.REPORT]:pts(0)}, meta:{pain:"reportSlow"} },
+      { key:"noPath", label:"I don’t know what to learn next.", score:{}, meta:{pain:"noPath"} }
+    ],
+    required: true
+  },
+  {
+    id: "timeLost",
+    section: "Pain & Urgency",
+    text: "How much time do you lose weekly due to manual work?",
+    help: "Estimate. This drives your urgency score.",
+    type: "single",
+    options: [
+      { key:"lt30", label:"< 30 minutes", score:{[DIM.AUTO]:pts(2)}, meta:{timeLost:0.5} },
+      { key:"12h", label:"1–2 hours", score:{[DIM.AUTO]:pts(1)}, meta:{timeLost:1.5} },
+      { key:"35h", label:"3–5 hours", score:{[DIM.AUTO]:pts(0)}, meta:{timeLost:4} },
+      { key:"6p", label:"6+ hours", score:{[DIM.AUTO]:pts(0)}, meta:{timeLost:7} }
+    ],
+    required: true
+  },
+  {
+    id: "urgentReport",
+    section: "Pain & Urgency",
+    text: "When someone asks for a report urgently, what usually happens?",
+    help: "This reveals whether your workflow is refreshable or fragile.",
+    type: "single",
+    options: [
+      { key:"fast", label:"I can deliver quickly with confidence.", score:{[DIM.REPORT]:pts(3), [DIM.AUTO]:pts(2), [DIM.ACCUR]:pts(2)}, meta:{urg:"fast"} },
+      { key:"rush", label:"I rush and hope it’s correct.", score:{[DIM.ACCUR]:pts(0), [DIM.REPORT]:pts(1)}, meta:{urg:"rush"} },
+      { key:"cleanFirst", label:"I delay because I need to clean data first.", score:{[DIM.CLEAN]:pts(0), [DIM.REPORT]:pts(1)}, meta:{urg:"cleanFirst"} },
+      { key:"avoid", label:"I avoid it / ask someone else.", score:{[DIM.REPORT]:pts(0), [DIM.ACCUR]:pts(0)}, meta:{urg:"avoid"} }
+    ],
+    required: true
+  },
+  {
+    id: "oldHabits",
+    section: "Pain & Urgency",
+    text: "Which statement is most true?",
+    help: "Honest check for 2026 readiness.",
+    type: "single",
+    options: [
+      { key:"sameYears", label:"I’ve been using the same Excel habits for years.", score:{[DIM.SPEED]:pts(1)}, meta:{habit:"same"} },
+      { key:"knowBetter", label:"I know there are better ways, but I never learned them.", score:{[DIM.AUTO]:pts(1), [DIM.CLEAN]:pts(1)}, meta:{habit:"stuck"} },
+      { key:"afraid", label:"I’m afraid I’ll break the file.", score:{[DIM.ACCUR]:pts(0)}, meta:{habit:"fear"} },
+      { key:"aiConfuse", label:"AI tools confuse me more than they help.", score:{[DIM.AI]:pts(0)}, meta:{habit:"aiConfuse"} }
+    ],
+    required: true
+  },
+
+  // Reality Check
+  {
+    id: "formatting",
+    section: "Reality Check",
+    text: "When formatting a report, you usually…",
+    help: "This affects speed and consistency.",
+    type: "single",
+    options: [
+      { key:"manual", label:"Manually adjust cells one-by-one", score:{[DIM.SPEED]:pts(0)}, meta:{fmt:"manual"} },
+      { key:"basic", label:"Use Format Painter and basic shortcuts", score:{[DIM.SPEED]:pts(1)}, meta:{fmt:"basic"} },
+      { key:"styles", label:"Use styles/templates consistently", score:{[DIM.SPEED]:pts(2), [DIM.CLEAN]:pts(2)}, meta:{fmt:"styles"} },
+      { key:"system", label:"Have a reusable template system", score:{[DIM.SPEED]:pts(3), [DIM.AUTO]:pts(2)}, meta:{fmt:"system"} }
+    ],
+    required: true
+  },
+  {
+    id: "structure",
+    section: "Reality Check",
+    text: "Your data is usually stored as…",
+    help: "Structure is the foundation of reporting and automation.",
+    type: "single",
+    options: [
+      { key:"random", label:"Random ranges with blank rows/columns", score:{[DIM.CLEAN]:pts(0)}, meta:{struct:"random"} },
+      { key:"sometimesTable", label:"A table sometimes", score:{[DIM.CLEAN]:pts(1)}, meta:{struct:"sometimes"} },
+      { key:"tables", label:"Proper Excel Tables most of the time", score:{[DIM.CLEAN]:pts(2), [DIM.REPORT]:pts(2)}, meta:{struct:"tables"} },
+      { key:"validated", label:"Structured tables + validation rules", score:{[DIM.CLEAN]:pts(3), [DIM.ACCUR]:pts(2)}, meta:{struct:"validated"} }
+    ],
+    required: true
+  },
+  {
+    id: "pivots",
+    section: "Reality Check",
+    text: "PivotTables:",
+    help: "Major multiplier for reporting speed.",
+    type: "single",
+    options: [
+      { key:"avoid", label:"I avoid them", score:{[DIM.REPORT]:pts(0)}, meta:{pivot:"avoid"} },
+      { key:"simple", label:"I can create simple pivots", score:{[DIM.REPORT]:pts(1)}, meta:{pivot:"simple"} },
+      { key:"slicers", label:"I can build pivot reports with slicers", score:{[DIM.REPORT]:pts(2)}, meta:{pivot:"slicers"} },
+      { key:"dash", label:"I can design dashboards from pivots", score:{[DIM.REPORT]:pts(3), [DIM.AUTO]:pts(1)}, meta:{pivot:"dash"} }
+    ],
+    required: true
+  },
+  {
+    id: "audit",
+    section: "Reality Check",
+    text: "When numbers look wrong, you…",
+    help: "Confidence comes from control.",
+    type: "single",
+    options: [
+      { key:"cellbycell", label:"Re-check manually cell by cell", score:{[DIM.ACCUR]:pts(0)}, meta:{audit:"manual"} },
+      { key:"filter", label:"Use Filter/Sort to investigate", score:{[DIM.ACCUR]:pts(1), [DIM.CLEAN]:pts(1)}, meta:{audit:"filter"} },
+      { key:"tools", label:"Use auditing tools / structured checks", score:{[DIM.ACCUR]:pts(2)}, meta:{audit:"tools"} },
+      { key:"process", label:"Have a verification process + controls", score:{[DIM.ACCUR]:pts(3), [DIM.AUTO]:pts(1)}, meta:{audit:"process"} }
+    ],
+    required: true
+  },
+  {
+    id: "repeatWork",
+    section: "Reality Check",
+    text: "Repeating monthly/weekly reports:",
+    help: "This is where most time can be recovered in 2026.",
+    type: "single",
+    options: [
+      { key:"rebuild", label:"I rebuild every time", score:{[DIM.AUTO]:pts(0)}, meta:{repeat:"rebuild"} },
+      { key:"copytweak", label:"Copy last month and tweak manually", score:{[DIM.AUTO]:pts(1)}, meta:{repeat:"copy"} },
+      { key:"templates", label:"Use templates + refresh some parts", score:{[DIM.AUTO]:pts(2), [DIM.SPEED]:pts(2)}, meta:{repeat:"templates"} },
+      { key:"refresh", label:"Refresh data and everything updates", score:{[DIM.AUTO]:pts(3), [DIM.REPORT]:pts(2)}, meta:{repeat:"refresh"} }
+    ],
+    required: true
+  },
+  {
+    id: "aiUse",
+    section: "Reality Check",
+    text: "When using AI for Excel/Office tasks, you usually…",
+    help: "2026 readiness = AI usage + validation.",
+    type: "single",
+    options: [
+      { key:"no", label:"Don’t use AI", score:{[DIM.AI]:pts(0)}, meta:{ai:"no"} },
+      { key:"distrust", label:"Ask AI but don’t trust it", score:{[DIM.AI]:pts(1)}, meta:{ai:"distrust"} },
+      { key:"validate", label:"Use AI + validate results", score:{[DIM.AI]:pts(2), [DIM.ACCUR]:pts(2)}, meta:{ai:"validate"} },
+      { key:"system", label:"Use AI systematically (prompts + verification)", score:{[DIM.AI]:pts(3), [DIM.AUTO]:pts(1)}, meta:{ai:"system"} }
+    ],
+    required: true
+  },
+
+  // 2026 Expectations
+  {
+    id: "expect",
+    section: "2026 Expectations",
+    text: "In 2026, your environment expects you to…",
+    help: "This powers the benchmark meter.",
+    type: "single",
+    options: [
+      { key:"justjob", label:"Just do your job", score:{}, meta:{expect:1} },
+      { key:"fasterfewer", label:"Produce faster outputs with fewer errors", score:{}, meta:{expect:2} },
+      { key:"insights", label:"Communicate insights, not just numbers", score:{}, meta:{expect:3} },
+      { key:"aiAuto", label:"Use AI/automation to scale output quality", score:{}, meta:{expect:4} }
+    ],
+    required: true
+  },
+  {
+    id: "riskIfNo",
+    section: "2026 Expectations",
+    text: "What happens if you don’t upgrade your skills in 2026?",
+    help: "This clarifies urgency and action intent.",
+    type: "single",
+    options: [
+      { key:"nothing", label:"Nothing", score:{}, meta:{riskNo:1} },
+      { key:"busyBehind", label:"I’ll stay busy but fall behind", score:{}, meta:{riskNo:2} },
+      { key:"missOpp", label:"I’ll miss opportunities/promotions", score:{}, meta:{riskNo:3} },
+      { key:"dependent", label:"I’ll become dependent on others", score:{}, meta:{riskNo:4} }
+    ],
+    required: true
+  },
+
+  // Adaptive extras
+  {
+    id: "pivotExtra",
+    section: "Smart Follow-up",
+    text: "Quick check: When you need a summary by department/month, you usually…",
+    help: "Confirms whether PivotTables are a missing multiplier.",
+    type: "single",
+    options: [
+      { key:"manualSum", label:"Manually filter and calculate totals", score:{[DIM.REPORT]:pts(0), [DIM.SPEED]:pts(0)}, meta:{pivotExtra:"manual"} },
+      { key:"basic", label:"Use basic formulas + filters", score:{[DIM.REPORT]:pts(1)}, meta:{pivotExtra:"basic"} },
+      { key:"pivot", label:"Use PivotTables", score:{[DIM.REPORT]:pts(2)}, meta:{pivotExtra:"pivot"} },
+      { key:"pivotDash", label:"Use PivotTables + slicers/charts", score:{[DIM.REPORT]:pts(3)}, meta:{pivotExtra:"dash"} }
+    ],
+    required: true,
+    isAdaptive: true
+  },
+  {
+    id: "autoExtra",
+    section: "Smart Follow-up",
+    text: "Automation readiness: When new data comes in, how do you update your report?",
+    help: "Indicates whether Power Query / refreshable workflows should be next.",
+    type: "single",
+    options: [
+      { key:"copyPaste", label:"Copy-paste and fix things manually", score:{[DIM.AUTO]:pts(0), [DIM.CLEAN]:pts(0)}, meta:{autoExtra:"copyPaste"} },
+      { key:"replaceRange", label:"Replace ranges and re-check formulas", score:{[DIM.AUTO]:pts(1)}, meta:{autoExtra:"replace"} },
+      { key:"tableRefresh", label:"Paste into a Table and refresh pivots/charts", score:{[DIM.AUTO]:pts(2), [DIM.REPORT]:pts(2)}, meta:{autoExtra:"table"} },
+      { key:"queryRefresh", label:"Click refresh (Power Query / connections)", score:{[DIM.AUTO]:pts(3)}, meta:{autoExtra:"query"} }
+    ],
+    required: true,
+    isAdaptive: true
+  },
+  {
+    id: "aiSafetyExtra",
+    section: "Smart Follow-up",
+    text: "AI safety check: When AI suggests a formula or summary, you…",
+    help: "Ensures AI boosts accuracy instead of creating silent errors.",
+    type: "single",
+    options: [
+      { key:"pasteHope", label:"Paste it and hope it works", score:{[DIM.AI]:pts(0), [DIM.ACCUR]:pts(0)}, meta:{aiSafety:"pasteHope"} },
+      { key:"trial", label:"Test on a few cells", score:{[DIM.ACCUR]:pts(1), [DIM.AI]:pts(1)}, meta:{aiSafety:"trial"} },
+      { key:"validate", label:"Validate with spot checks + logic", score:{[DIM.ACCUR]:pts(2), [DIM.AI]:pts(2)}, meta:{aiSafety:"validate"} },
+      { key:"process", label:"Have a standard verification process", score:{[DIM.ACCUR]:pts(3), [DIM.AI]:pts(3)}, meta:{aiSafety:"process"} }
+    ],
+    required: true,
+    isAdaptive: true
+  }
+];
+
+function shouldIncludeAdaptive(meta){
+  const pivotWeak = (meta.pivot === "avoid") || (meta.urg === "rush") || (meta.urg === "avoid");
+  const autoWeak = (meta.repeat === "rebuild" || meta.repeat === "copy" || (meta.timeLost && meta.timeLost >= 3));
+  const aiWeak = (meta.habit === "aiConfuse") || (meta.ai === "no") || (meta.ai === "distrust");
+  return { pivotExtra: pivotWeak, autoExtra: autoWeak, aiSafetyExtra: aiWeak };
+}
+
+/* -----------------------------
+   State + DOM
+-------------------------------- */
+let qIndex = 0;
+let activeQuestions = [];
+let answers = {};
+let metaStore = {};
+let radarChart = null;
+
+const el = (id)=>document.getElementById(id);
+
+const statePill = el("statePill");
+const progressText = el("progressText");
+const progressBar = el("progressBar");
+const sectionHint = el("sectionHint");
+
+const panelTitle = el("panelTitle");
+const panelDesc = el("panelDesc");
+const strip = el("strip");
+const sectionDot = el("sectionDot");
+const sectionTagText = el("sectionTagText");
+
+const sidebarNudge = el("sidebarNudge");
+
+const screenStart = el("screenStart");
+const screenQuiz = el("screenQuiz");
+const screenResults = el("screenResults");
+
+const questionHost = el("questionHost");
+const coachNudge = el("coachNudge");
+
+const btnStart = el("btnStart");
+const btnBack = el("btnBack");
+const btnNext = el("btnNext");
+const btnReset = el("btnReset");
+
+const userName = el("userName");
+const userDept = el("userDept");
+const userRoleTitle = el("userRoleTitle");
+
+const scoreBig = el("scoreBig");
+const expectationLabel = el("expectationLabel");
+const riskLabel = el("riskLabel");
+const expectMeter = el("expectMeter");
+const expectNote = el("expectNote");
+const strengthList = el("strengthList");
+const bottleList = el("bottleList");
+const goalList = el("goalList");
+const aiStatement = el("aiStatement");
+const hiddenGapText = el("hiddenGapText");
+const timeSavedTag = el("timeSavedTag");
+const closingNudge = el("closingNudge");
+const radarExplanation = el("radarExplanation");
+
+const btnCopy = el("btnCopy");
+const btnDownloadWord = el("btnDownloadWord");
+const btnWhatsApp = el("btnWhatsApp");
+const btnRestart = el("btnRestart");
+const manualMsgHint = el("manualMsgHint");
+
+/* Tabs */
+const tabs = el("tabs");
+function setTab(tabName){
+  const allTabs = tabs.querySelectorAll(".tab");
+  allTabs.forEach(t => t.classList.toggle("active", t.dataset.tab === tabName));
+  ["overview","radar","goals","action"].forEach(name=>{
+    el("tab-"+name).classList.toggle("hide", name !== tabName);
+  });
+}
+
+tabs.addEventListener("click", (e)=>{
+  const btn = e.target.closest(".tab");
+  if(!btn) return;
+  setTab(btn.dataset.tab);
+});
+
+/* -----------------------------
+   UI helpers
+-------------------------------- */
+function setStatePill(text, tone="neutral"){
+  const strong = tone==="good" ? `style="color:var(--ok)"` :
+                tone==="warn" ? `style="color:var(--gold)"` :
+                tone==="bad"  ? `style="color:var(--danger)"` : `style="color:var(--text)"`;
+  statePill.innerHTML = `Status: <strong ${strong}>${text}</strong>`;
+}
+
+function setProgress(current, total){
+  progressText.textContent = `Step ${current} of ${total}`;
+  progressBar.style.width = `${Math.round((current/total)*100)}%`;
+}
+
+function showScreen(which){
+  screenStart.classList.add("hide");
+  screenQuiz.classList.add("hide");
+  screenResults.classList.add("hide");
+  which.classList.remove("hide");
+}
+
+function sectionColor(section){
+  const s = (section || "").toLowerCase();
+  if(s.includes("profile")) return getComputedStyle(document.documentElement).getPropertyValue("--c-profile").trim();
+  if(s.includes("pain")) return getComputedStyle(document.documentElement).getPropertyValue("--c-pain").trim();
+  if(s.includes("reality")) return getComputedStyle(document.documentElement).getPropertyValue("--c-reality").trim();
+  if(s.includes("2026")) return getComputedStyle(document.documentElement).getPropertyValue("--c-expect").trim();
+  if(s.includes("results")) return getComputedStyle(document.documentElement).getPropertyValue("--c-results").trim();
+  if(s.includes("follow")) return getComputedStyle(document.documentElement).getPropertyValue("--c-expect").trim();
+  return getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
+}
+
+function applySectionTheme(sectionLabel){
+  const col = sectionColor(sectionLabel);
+  strip.style.background = col;
+  sectionDot.style.background = col;
+  sectionTagText.textContent = sectionLabel || "Start";
+  sectionHint.textContent = `Section: ${sectionLabel || "Start"}`;
+}
+
+/* -----------------------------
+   Adaptive question set
+-------------------------------- */
+function buildMetaFromAnswers(questionList){
+  const meta = {};
+  for(const q of questionList){
+    const chosenKey = answers[q.id];
+    if(!chosenKey) continue;
+    const opt = q.options.find(o=>o.key===chosenKey);
+    if(opt && opt.meta) Object.assign(meta, opt.meta);
+  }
+  return meta;
+}
+
+function computeActiveQuestions(){
+  const base = QUESTIONS.filter(q => !q.isAdaptive);
+  metaStore = buildMetaFromAnswers(base);
+  const include = shouldIncludeAdaptive(metaStore);
+  const adaptives = [];
+  if(include.pivotExtra) adaptives.push(QUESTIONS.find(q=>q.id==="pivotExtra"));
+  if(include.autoExtra) adaptives.push(QUESTIONS.find(q=>q.id==="autoExtra"));
+  if(include.aiSafetyExtra) adaptives.push(QUESTIONS.find(q=>q.id==="aiSafetyExtra"));
+
+  const insertAfterId = "aiUse";
+  const out = [];
+  for(const q of base){
+    out.push(q);
+    if(q.id === insertAfterId){
+      for(const aq of adaptives) out.push(aq);
+    }
+  }
+  return out;
+}
+
+function refreshAdaptiveFlowIfNeeded(changedId){
+  const triggerIds = new Set(["pivots","urgentReport","repeatWork","timeLost","oldHabits","aiUse"]);
+  if(!triggerIds.has(changedId)) return;
+
+  const prev = activeQuestions.map(q=>q.id);
+  const nextList = computeActiveQuestions();
+  const next = nextList.map(q=>q.id);
+  if(JSON.stringify(prev) !== JSON.stringify(next)){
+    activeQuestions = nextList;
+    if(qIndex >= activeQuestions.length) qIndex = activeQuestions.length - 1;
+  }
+}
+
+/* -----------------------------
+   Coaching nudges (also shown in sidebar)
+-------------------------------- */
+function estimateTimeRecovered(timeLost){
+  const lost = timeLost || 1;
+  const pct = lost >= 6 ? 0.55 : (lost >= 3 ? 0.45 : 0.30);
+  return Math.max(0.5, Math.round(lost * pct * 10)/10);
+}
+
+function getCoachNudge(){
+  const m = metaStore;
+  if(m.timeLost && m.timeLost >= 3){
+    const rec = estimateTimeRecovered(m.timeLost);
+    return `If you recover ~${rec} hrs/week, that’s ~${Math.round(rec*52)} hours/year. This is a workflow problem, not “small inefficiency”.`;
+  }
+  if(m.repeat === "rebuild") return "If a workflow repeats, it is a perfect candidate for automation.";
+  if(m.habit === "aiConfuse" || m.ai === "distrust") return "In 2026, AI isn’t magic. Winners use AI with verification.";
+  if(m.urg === "rush") return "Rushing is not a personality trait. It’s a workflow problem.";
+  return "You’re not behind. You’re running an old system in a new world.";
+}
+
+/* -----------------------------
+   Render question (more balanced and compact)
+-------------------------------- */
+function renderQuestion(){
+  const q = activeQuestions[qIndex];
+  if(!q) return;
+
+  setStatePill("In Progress","warn");
+  setProgress(2,4);
+
+  panelTitle.textContent = "Diagnostic";
+  panelDesc.textContent = "Answer honestly. The goal is clarity and a practical learning path for 2026.";
+  applySectionTheme(q.section);
+
+  const totalQ = activeQuestions.length;
+  const displayNum = qIndex + 1;
+  const chosen = answers[q.id];
+
+  const twoCol = (q.options.length >= 4) ? "twoCol" : "";
+
+  questionHost.innerHTML = `
+    <div class="q">
+      <div class="qTop">
+        <div style="display:flex; gap:10px; align-items:flex-start;">
+          <div class="qNum">${displayNum}</div>
+          <div>
+            <p class="qText">${escapeHtml(q.text)}</p>
+            ${q.help ? `<p class="qHelp">${escapeHtml(q.help)}</p>` : ``}
+          </div>
+        </div>
+        <div class="qCounter">${displayNum} / ${totalQ}</div>
+      </div>
+
+      <div class="options ${twoCol}" role="radiogroup" aria-label="${escapeHtml(q.text)}">
+        ${q.options.map(o=>{
+          const id = `${q.id}_${o.key}`;
+          const checked = chosen === o.key ? "checked" : "";
+          return `
+            <label class="opt" for="${id}">
+              <input type="radio" name="${q.id}" id="${id}" value="${o.key}" ${checked} />
+              <div class="label">${escapeHtml(o.label)}</div>
+            </label>
+          `;
+        }).join("")}
+      </div>
+    </div>
+  `;
+
+  const radios = questionHost.querySelectorAll(`input[name="${CSS.escape(q.id)}"]`);
+  radios.forEach(r=>{
+    r.addEventListener("change", (e)=>{
+      answers[q.id] = e.target.value;
+      metaStore = buildMetaFromAnswers(activeQuestions);
+      const nudge = getCoachNudge();
+      coachNudge.textContent = "Kelvin Coach Note: " + nudge;
+      sidebarNudge.textContent = nudge;
+      refreshAdaptiveFlowIfNeeded(q.id);
+      updateNavButtons();
+    });
+  });
+
+  metaStore = buildMetaFromAnswers(activeQuestions);
+  const nudge = getCoachNudge();
+  coachNudge.textContent = "Kelvin Coach Note: " + nudge;
+  sidebarNudge.textContent = nudge;
+
+  updateNavButtons();
+}
+
+function updateNavButtons(){
+  btnBack.disabled = qIndex === 0;
+  btnNext.textContent = (qIndex === activeQuestions.length - 1) ? "See Results" : "Next";
+}
+
+function canProceedFromQuestion(){
+  const q = activeQuestions[qIndex];
+  return !!answers[q.id];
+}
+
+/* -----------------------------
+   Scoring + Results
+-------------------------------- */
+function computeScores(){
+  const raw = {[DIM.SPEED]:0,[DIM.CLEAN]:0,[DIM.REPORT]:0,[DIM.ACCUR]:0,[DIM.AUTO]:0,[DIM.AI]:0};
+  const max = {[DIM.SPEED]:0,[DIM.CLEAN]:0,[DIM.REPORT]:0,[DIM.ACCUR]:0,[DIM.AUTO]:0,[DIM.AI]:0};
+
+  for(const q of activeQuestions){
+    const chosenKey = answers[q.id];
+    if(!chosenKey) continue;
+    const opt = q.options.find(o=>o.key===chosenKey);
+    const scoreMap = opt?.score || {};
+
+    for(const dim of Object.keys(raw)){
+      const optMax = Math.max(...q.options.map(o => (o.score && o.score[dim] !== undefined) ? o.score[dim] : -Infinity));
+      if(optMax !== -Infinity) max[dim] += optMax;
+      if(scoreMap[dim] !== undefined) raw[dim] += scoreMap[dim];
+    }
+  }
+
+  const dimPct = {};
+  for(const dim of Object.keys(raw)){
+    dimPct[dim] = max[dim] > 0 ? Math.round((raw[dim] / max[dim]) * 100) : 0;
+  }
+
+  let overall = 0;
+  for(const [dim,w] of Object.entries(weights)){
+    overall += (dimPct[dim] * w);
+  }
+  overall = Math.round(overall);
+
+  return { dimPct, overall };
+}
+
+function getRiskFlags(meta, dimPct){
+  const flags = [];
+  if(meta.repeat === "rebuild" || meta.repeat === "copy" || (meta.timeLost && meta.timeLost >= 3) || dimPct[DIM.AUTO] < 40) flags.push("Manual Work Trap");
+  if(meta.struct === "random" || meta.urg === "cleanFirst" || dimPct[DIM.CLEAN] < 45) flags.push("Messy File Risk");
+  if(meta.pivot === "avoid" || meta.urg === "rush" || meta.urg === "avoid" || dimPct[DIM.REPORT] < 45) flags.push("Reporting Under Pressure");
+  if(meta.pain === "accuracyFear" || meta.audit === "manual" || dimPct[DIM.ACCUR] < 40) flags.push("Low Confidence with Accuracy");
+  if(meta.habit === "aiConfuse" || meta.ai === "no" || meta.ai === "distrust" || dimPct[DIM.AI] < 35) flags.push("AI Confusion Risk");
+  if(meta.pain === "noPath") flags.push("No Learning Path Risk");
+  return flags.slice(0,3);
+}
+
+function expectationLabelFromMeta(meta){
+  const e = meta.expect || 2;
+  if(e <= 1) return "Basic expectations";
+  if(e === 2) return "Speed + fewer errors expected";
+  if(e === 3) return "Insights expected";
+  return "AI + automation expected";
+}
+
+function expectationBand(overall, meta){
+  const e = meta.expect || 2;
+  const thresholds = {
+    1: { behind: 35, ontrack: 60 },
+    2: { behind: 45, ontrack: 70 },
+    3: { behind: 55, ontrack: 78 },
+    4: { behind: 62, ontrack: 84 }
+  }[e];
+  if(overall < thresholds.behind) return "Behind";
+  if(overall < thresholds.ontrack) return "On Track";
+  return "Future-Ready";
+}
+
+function meterColorForBand(band){
+  if(band === "Behind") return "linear-gradient(90deg, rgba(255,107,107,.9), rgba(199,162,74,.9))";
+  if(band === "On Track") return "linear-gradient(90deg, rgba(199,162,74,.9), rgba(122,167,255,.9))";
+  return "linear-gradient(90deg, rgba(42,174,163,.9), rgba(110,231,183,.9))";
+}
+
+function topDims(dimPct){
+  const entries = Object.entries(dimPct).sort((a,b)=>b[1]-a[1]);
+  return { strengths: entries.slice(0,3), gaps: entries.slice(-3).reverse() };
+}
+
+function buildGoals(meta, dimPct){
+  const dimsSorted = Object.entries(dimPct).sort((a,b)=>a[1]-b[1]);
+  const chosen = dimsSorted.slice(0,3).map(([d])=>d);
+
+  const goalMap = {
+    [DIM.AUTO]: { title:"Kill Manual Work (Automation & Reuse)", desc:"Build refreshable workflows: templates, Tables → Pivot refresh, then Power Query when ready." },
+    [DIM.CLEAN]: { title:"Fix Structure & Clean Data", desc:"Standardize inputs and use Tables + validation so reporting becomes predictable." },
+    [DIM.REPORT]: { title:"Reporting Confidence (Pivot + Dashboard Basics)", desc:"Move from panic reporting to reliable summaries using PivotTables, slicers, and clean charts." },
+    [DIM.ACCUR]: { title:"Accuracy & Control (Stop Silent Errors)", desc:"Adopt verification habits: checks, auditing tools, structured logic review." },
+    [DIM.SPEED]: { title:"Speed & Shortcuts (Work Faster Daily)", desc:"Upgrade habits: shortcut systems, formatting systems, and repeatable layouts." },
+    [DIM.AI]: { title:"AI Leverage (Prompts + Verification)", desc:"Use AI to draft formulas and summaries—then validate with a standard check routine." }
+  };
+
+  const riskAuto = (meta.repeat === "rebuild" || meta.repeat === "copy" || (meta.timeLost && meta.timeLost >= 3));
+  if(riskAuto && !chosen.includes(DIM.AUTO)) chosen[2] = DIM.AUTO;
+
+  const seen = new Set();
+  const final = [];
+  for(const d of chosen){ if(!seen.has(d)){ seen.add(d); final.push(d); } }
+  while(final.length < 3){
+    for(const d of Object.values(DIM)){
+      if(!seen.has(d)){ seen.add(d); final.push(d); if(final.length===3) break; }
+    }
+  }
+  return final.map(d=>({ dim:d, title:goalMap[d].title, desc:goalMap[d].desc }));
+}
+
+function buildAIStatement(profile, meta, overall, goals, risks){
+  const name = profile.name ? profile.name.trim() : "You";
+  const context = [profile.roleTitle?.trim(), profile.dept?.trim()].filter(Boolean).join(" • ");
+  const band = expectationBand(overall, meta);
+  const rec = estimateTimeRecovered(meta.timeLost);
+
+  const painLine = meta.timeLost
+    ? `You estimate losing about ${meta.timeLost} hours/week to manual work. A realistic recovery target is ~${rec} hours/week.`
+    : `You likely have recoverable time trapped in manual steps.`;
+
+  const riskText = risks.length ? `Top risk flags: ${risks.join(", ")}.` : "No major risk flags detected.";
+
+  const validateLine = (meta.ai === "validate" || meta.ai === "system")
+    ? "Keep your AI habit: use AI for speed, then validate to protect accuracy."
+    : "Upgrade your AI habit: use AI for speed, then validate to protect accuracy.";
+
+  return `${name}'s 2026 Learning Goal Statement
+
+${context ? `Context: ${context}\n` : ""}Your Office Productivity Score is ${overall}/100, and your readiness is: ${band}.
+
+${painLine}
+${riskText}
+
+2026 Focus (next 90 days):
+1) ${goals[0].title} — ${goals[0].desc}
+2) ${goals[1].title} — ${goals[1].desc}
+3) ${goals[2].title} — ${goals[2].desc}
+
+${validateLine}
+
+Recommended next step:
+Schedule a Free 2026 Learning Plan Call to convert this into a role-specific roadmap (what to learn, in what order, and which workflow to fix first).`;
+}
+
+function buildHiddenGap(meta, dimPct){
+  const e = meta.expect || 2;
+  if(e >= 3 && (dimPct[DIM.REPORT] < 55 || dimPct[DIM.AUTO] < 55)){
+    return "Hidden Gap: Your environment expects insights and speed, but your workflow may not refresh reliably under pressure. Fix refreshability (structure + automation) before chasing advanced tricks.";
+  }
+  if(meta.urg === "rush" || meta.urg === "cleanFirst"){
+    return "Hidden Gap: The pressure is not the deadline—it’s the lack of a refreshable workflow. When the pipeline is clean, urgent reporting becomes normal work.";
+  }
+  if(meta.habit === "same" && dimPct[DIM.SPEED] < 60){
+    return "Hidden Gap: Old habits are quietly costing you time. A small upgrade in daily shortcut systems creates weekly time savings fast.";
+  }
+  return "Hidden Gap: The fastest wins in 2026 come from structure and repeatability—not random features.";
+}
+
+function renderRadar(dimPct){
+  const labels = Object.values(DIM);
+  const data = labels.map(l=>dimPct[l] || 0);
+  const ctx = document.getElementById("radar");
+  if(radarChart) radarChart.destroy();
+
+  radarChart = new Chart(ctx, {
+    type: "radar",
+    data: { labels, datasets: [{ label: "Your Score", data }] },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        r: {
+          beginAtZero: true, min:0, max:100,
+          ticks: { display: false },
+          grid: { color: "rgba(255,255,255,.10)" },
+          angleLines: { color: "rgba(255,255,255,.10)" },
+          pointLabels: { color: "rgba(231,238,252,.90)", font: { size: 11, weight:"600" } }
+        }
+      },
+      elements: { line: { borderWidth: 2 }, point: { radius: 2 } }
+    }
+  });
+}
+
+function makeLi(title, subtitle){
+  const li = document.createElement("li");
+  li.className = "li";
+  li.innerHTML = `<strong>${escapeHtml(title)}</strong><small>${escapeHtml(subtitle)}</small>`;
+  return li;
+}
+
+function escapeHtml(str){
+  return String(str ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+/* -----------------------------
+   WhatsApp + Word download
+-------------------------------- */
+function buildWhatsAppMessage(profile, overall, bottleneck, topGoal){
+  const who = [profile.name?.trim(), profile.roleTitle?.trim(), profile.dept?.trim()].filter(Boolean).join(" • ");
+  const whoLine = who ? ` (${who})` : "";
+  return `Hi Kelvin, I just completed the 2026 Office Learning Goal Diagnostic${whoLine}.
+
+My score is ${overall}/100.
+My #1 bottleneck is: ${bottleneck}.
+My top 2026 focus is: ${topGoal}.
+
+Can you advise the right learning plan and what to fix first?`;
+}
+function buildWhatsAppLink(message){
+  const base = `https://wa.me/${encodeURIComponent(WHATSAPP_NUMBER)}`;
+  return `${base}?text=${encodeURIComponent(message)}`;
+}
+
+function downloadWordDoc(filename, htmlContent){
+  const header = `
+    <html xmlns:o='urn:schemas-microsoft-com:office:office'
+          xmlns:w='urn:schemas-microsoft-com:office:word'
+          xmlns='http://www.w3.org/TR/REC-html40'>
+    <head><meta charset='utf-8'></head><body>`;
+  const footer = `</body></html>`;
+  const sourceHTML = header + htmlContent + footer;
+
+  const blob = new Blob([sourceHTML], { type: "application/msword" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function buildReportHTML(profile, metaStore, overall, dimPct, goals, risks){
+  const now = new Date();
+  const dateStr = now.toLocaleString();
+  const who = [profile.name?.trim(), profile.roleTitle?.trim(), profile.dept?.trim()].filter(Boolean).join(" • ");
+  const dimRows = Object.values(DIM).map(d=>`<tr><td style="padding:6px;border:1px solid #ddd;">${escapeHtml(d)}</td><td style="padding:6px;border:1px solid #ddd;">${dimPct[d]}%</td></tr>`).join("");
+  const riskText = risks.length ? risks.join(", ") : "None detected";
+
+  const goalLis = goals.map((g,i)=>`<li><strong>Goal ${i+1}: ${escapeHtml(g.title)}</strong><br>${escapeHtml(g.desc)}</li>`).join("");
+
+  return `
+    <h2>2026 Microsoft Office Learning Goal Diagnostic — Report</h2>
+    <p><strong>Generated:</strong> ${escapeHtml(dateStr)}</p>
+    <p><strong>Participant:</strong> ${escapeHtml(who || "—")}</p>
+
+    <h3>Summary</h3>
+    <p><strong>Office Productivity Score:</strong> ${overall}/100</p>
+    <p><strong>2026 Expectations:</strong> ${escapeHtml(expectationLabelFromMeta(metaStore))}</p>
+    <p><strong>Risk Flags:</strong> ${escapeHtml(riskText)}</p>
+
+    <h3>Dimension Scores</h3>
+    <table style="border-collapse:collapse; width:100%; max-width:700px;">
+      <thead><tr><th style="padding:6px;border:1px solid #ddd;text-align:left;">Dimension</th><th style="padding:6px;border:1px solid #ddd;text-align:left;">Score</th></tr></thead>
+      <tbody>${dimRows}</tbody>
+    </table>
+
+    <h3>Your 2026 Learning Focus (3 Goals)</h3>
+    <ol>${goalLis}</ol>
+
+    <h3>AI-Generated 2026 Goal Statement</h3>
+    <pre style="white-space:pre-wrap; border:1px solid #ddd; padding:10px;">${escapeHtml(aiStatement.value)}</pre>
+
+    <p><em>Next step: WhatsApp Kelvin (60123907200) for a Free 2026 Learning Plan Call.</em></p>
+  `;
+}
+
+/* -----------------------------
+   Results rendering (shorter: tabs)
+-------------------------------- */
+function renderResults(){
+  setStatePill("Completed","good");
+  setProgress(4,4);
+
+  panelTitle.textContent = "Results";
+  panelDesc.textContent = "Clear direction for 2026. Three goals. One action step.";
+  applySectionTheme("Results");
+
+  metaStore = buildMetaFromAnswers(activeQuestions);
+
+  const profile = {
+    name: userName.value || "",
+    dept: userDept.value || "",
+    roleTitle: userRoleTitle.value || ""
+  };
+
+  const { dimPct, overall } = computeScores();
+  const risks = getRiskFlags(metaStore, dimPct);
+  const band = expectationBand(overall, metaStore);
+
+  scoreBig.textContent = `${overall}`;
+  expectationLabel.textContent = `2026 Expectations: ${expectationLabelFromMeta(metaStore)} • Readiness: ${band}`;
+  riskLabel.textContent = `Risk Flags: ${risks.length ? risks.join(" • ") : "None detected"}`;
+
+  expectMeter.style.background = meterColorForBand(band);
+  expectMeter.style.width = `${Math.max(6, Math.min(100, overall))}%`;
+
+  if(band === "Behind"){
+    expectNote.textContent = "Fixable. Start by removing manual work and stabilizing structure. Once reporting becomes refreshable, productivity jumps quickly.";
+  } else if(band === "On Track"){
+    expectNote.textContent = "Close. One or two workflow upgrades (automation + verification) will make you future-ready for 2026 expectations.";
+  } else {
+    expectNote.textContent = "Strong position. Your next gains come from systematizing your best workflows and using AI safely for speed.";
+  }
+
+  const td = topDims(dimPct);
+  strengthList.innerHTML = "";
+  td.strengths.forEach(([dim, pct])=>{
+    strengthList.appendChild(makeLi(dim, `${pct}%`));
+  });
+
+  bottleList.innerHTML = "";
+  td.gaps.forEach(([dim, pct])=>{
+    bottleList.appendChild(makeLi(dim, `${pct}%`));
+  });
+
+  const goals = buildGoals(metaStore, dimPct);
+  goalList.innerHTML = "";
+  goals.forEach((g, idx)=>{
+    goalList.appendChild(makeLi(`Goal ${idx+1}: ${g.title}`, g.desc));
+  });
+
+  aiStatement.value = buildAIStatement(profile, metaStore, overall, goals, risks);
+
+  const hidden = buildHiddenGap(metaStore, dimPct);
+  hiddenGapText.textContent = hidden;
+  closingNudge.textContent = "Kelvin Coach Note: Pick ONE workflow you repeat often. Fix it first. That single win creates momentum.";
+  const rec = estimateTimeRecovered(metaStore.timeLost);
+  timeSavedTag.innerHTML = `Estimated time recovered: <strong>${rec} hrs/week</strong>`;
+
+  radarExplanation.textContent = `Your biggest lift will come from improving: ${td.gaps.map(g=>g[0]).join(", ")}. Your strongest areas are: ${td.strengths.map(s=>s[0]).join(", ")}.`;
+
+  renderRadar(dimPct);
+
+  const bottleneck1 = td.gaps[0]?.[0] || "Manual Work Trap";
+  const msg = buildWhatsAppMessage(profile, overall, bottleneck1, goals[0]?.title || "Automation");
+  btnWhatsApp.href = buildWhatsAppLink(msg);
+  manualMsgHint.textContent = `Send: Score ${overall}/100 • #1 bottleneck ${bottleneck1} • Target month (e.g., March 2026)`;
+
+  // default to Overview tab
+  setTab("overview");
+}
+
+/* -----------------------------
+   Navigation
+-------------------------------- */
+btnStart.addEventListener("click", ()=>{
+  activeQuestions = computeActiveQuestions();
+  qIndex = 0;
+  showScreen(screenQuiz);
+  renderQuestion();
+});
+
+btnBack.addEventListener("click", ()=>{
+  if(qIndex > 0){
+    qIndex--;
+    renderQuestion();
+  }
+});
+
+btnNext.addEventListener("click", ()=>{
+  if(!canProceedFromQuestion()){
+    coachNudge.textContent = "Kelvin Coach Note: Please select one option to continue.";
+    return;
+  }
+  if(qIndex < activeQuestions.length - 1){
+    qIndex++;
+    renderQuestion();
+  } else {
+    showScreen(screenResults);
+    renderResults();
+  }
+});
+
+btnReset.addEventListener("click", ()=>{
+  if(confirm("Reset all answers and restart?")) resetAll();
+});
+
+btnRestart.addEventListener("click", ()=> resetAll());
+
+btnCopy.addEventListener("click", async ()=>{
+  try{
+    await navigator.clipboard.writeText(aiStatement.value);
+    btnCopy.textContent = "Copied";
+    setTimeout(()=>btnCopy.textContent="Copy", 900);
+  }catch(e){
+    alert("Copy failed. You can manually select and copy the text.");
+  }
+});
+
+btnDownloadWord.addEventListener("click", ()=>{
+  const profile = { name: userName.value || "", dept: userDept.value || "", roleTitle: userRoleTitle.value || "" };
+  const { dimPct, overall } = computeScores();
+  const risks = getRiskFlags(metaStore, dimPct);
+  const goals = buildGoals(metaStore, dimPct);
+  const html = buildReportHTML(profile, metaStore, overall, dimPct, goals, risks);
+  downloadWordDoc("2026_Office_Learning_Goal_Diagnostic_Report.doc", html);
+});
+
+/* -----------------------------
+   Reset
+-------------------------------- */
+function resetAll(){
+  qIndex = 0;
+  answers = {};
+  metaStore = {};
+  activeQuestions = [];
+  setStatePill("Ready");
+  setProgress(1,4);
+  panelTitle.textContent = "Start";
+  panelDesc.textContent = "Optional details for your report, then the diagnostic begins.";
+  applySectionTheme("Start");
+  sidebarNudge.textContent = "You’re not behind. You’re running an old system in a new world.";
+  questionHost.innerHTML = "";
+  coachNudge.textContent = "";
+  showScreen(screenStart);
+}
+
+(function init(){
+  setProgress(1,4);
+  setStatePill("Ready");
+  applySectionTheme("Start");
+})();
+</script>
+</body>
+</html>
